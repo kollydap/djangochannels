@@ -7,6 +7,15 @@
   </head>
   <body>
     What chat room would you like to enter?<br />
+    <div>
+      <label for="roomSelect">Active Rooms</label>
+      <select multiple class="form-control" id="roomSelect">
+        {% for room in rooms %}
+        <option>{{room}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <br />
     <input id="room-name-input" type="text" size="100" /><br />
     <input id="room-name-submit" type="button" value="Enter" />
 
