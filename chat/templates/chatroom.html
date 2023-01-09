@@ -39,15 +39,16 @@
 
       chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
-        console.log(data);
+
+        console.log(data.type);
         switch (data.type) {
-          case "chat_message":
-            document.querySelector("#chat-log").value += data.message + " " +data.user + \n";
-            console.log(data.message);
+          case "user_list":
+            document.querySelector("#chat-log").value += data.user + "\n";
+            console.log(data);
             break;
           case "user_list":
             for (let i = 0; i < data.users.length; i++) {
-              console.log(data.users);
+              //console.log(data.users);
               onlineUsersSelectorAdd(data.users[i]);
             }
             break;
@@ -85,8 +86,10 @@
         chatSocket.send(
           JSON.stringify({
             message: message,
+            yell: "yell  ",
           })
         );
+
         messageInputDom.value = "";
       };
     </script>

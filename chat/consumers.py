@@ -52,27 +52,38 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
+        '''
+        This method basically recieves data from a websocket instance and returns the data to the chat room 1.e channel layers
+        '''
+        #we get data from the frontend, (websocket)
         text_data_json = json.loads(text_data)
+        #we get the message from the websocket
         message = text_data_json["message"]
         if not self.user.is_authenticated:
             return
 
-
+        #WE return the message from the websocket back to the room
         # Send message to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, 
-            {
-                "type": "chat_message", 
-                "message": message,
-                'user':self.user.username,
-                }
+        # async_to_sync(self.channel_layer.group_send)(
+        #     self.room_group_name, 
+        #     {
+        #         "type": "chat_message", 
+        #         "message": message,
+        #         'user':self.user.username,
+        #      }
 
-        )
+        # )
+        self.send(json.dumps({
+            'type':'uer_list',
+            'message':[user.username for user in self.room.online.all()],
+        }))
         Message.objects.create(user = self.user,room = self.room,content=message)
     # Receive message from room group
     def chat_message(self, event):
-        message = event["message"]
-
+    
+        # message = event["message"]
+        print(json.dumps(event))
+        print("jfjjfjfj")
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
 
