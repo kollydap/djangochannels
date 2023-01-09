@@ -43,10 +43,6 @@
         console.log(data.type);
         switch (data.type) {
           case "user_list":
-            document.querySelector("#chat-log").value += data.user + "\n";
-            console.log(data);
-            break;
-          case "user_list":
             for (let i = 0; i < data.users.length; i++) {
               //console.log(data.users);
               onlineUsersSelectorAdd(data.users[i]);
@@ -57,14 +53,15 @@
             console.log(data.user);
             onlineUsersSelectorAdd(data.user);
             break;
+          case "chat_message":
+            chatLog.value += data.user + " - " + data.message + "\n";
+
+            break;
           case "user_leave":
             chatLog.value += data.user + " left the room. \n";
             onlineUsersSelectorRemove(data.user);
             break;
         }
-
-        document.querySelector("#chat-log").value +=
-          data.user + " - " + data.message + "\n";
       };
 
       chatSocket.onclose = function (e) {

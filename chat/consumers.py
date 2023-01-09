@@ -10,18 +10,30 @@ class ChatConsumer(WebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
+        self.room_name = None
+        self.room_group_name = None
+        self.room = None
+        self.user_inbox = None
     def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
         self.user = self.scope["user"]
         self.room = Room.objects.get(name = self.room_name)
+        self.user_inbox = f'inbox_{self.user.username}'
+        
         self.accept()
         self.send(json.dumps({
             'type':'user_list',
+
             'users':[user.username for user in self.room.online.all()],
         }))
         if self.user.is_authenticated:
-        # Join room group
+       
+          # join the room group
+            async_to_sync(self.channel_layer.group_add)(
+                self.room_group_name,
+                self.channel_name,
+            )
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
@@ -30,9 +42,12 @@ class ChatConsumer(WebsocketConsumer):
                 }
             )
             self.room.online.add(self.user)
+      
+
 
     def user_join(self,event):
         self.send(text_data=json.dumps(event))
+        print(json.dumps(event))
     def user_leave(self,event):
         self.send(text_data=json.dumps(event))
 
@@ -61,29 +76,23 @@ class ChatConsumer(WebsocketConsumer):
         message = text_data_json["message"]
         if not self.user.is_authenticated:
             return
-
         #WE return the message from the websocket back to the room
         # Send message to room group
-        # async_to_sync(self.channel_layer.group_send)(
-        #     self.room_group_name, 
-        #     {
-        #         "type": "chat_message", 
-        #         "message": message,
-        #         'user':self.user.username,
-        #      }
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name, 
+            {
+                "type": "chat_message", 
+                "message": message,
+                'user':self.user.username,
+             }
 
-        # )
-        self.send(json.dumps({
-            'type':'uer_list',
-            'message':[user.username for user in self.room.online.all()],
-        }))
+        )
+      
         Message.objects.create(user = self.user,room = self.room,content=message)
     # Receive message from room group
     def chat_message(self, event):
     
         # message = event["message"]
-        print(json.dumps(event))
-        print("jfjjfjfj")
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
 
@@ -127,3 +136,9 @@ class ChatConsumer(WebsocketConsumer):
 #         message = event["message"]
 #         # Send message to WebSocket
 #         await self.send(text_data=json.dumps({"message": message,"sender":str(self.user)}))
+
+  # create a user inbox for private messages
+            # async_to_sync(self.channel_layer.group_add)(
+            #     self.user_inbox,
+            #     self.channel_name,
+            # )
