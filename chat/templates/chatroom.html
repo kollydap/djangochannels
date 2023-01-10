@@ -8,6 +8,8 @@
   <body>
     <div>
       <div>{{room_name.name}} room</div>
+    </div>
+    <div>
       <label for="onlineUsers">Online Users </label>
       <select multiple class="form-control" id="onlineUsersSelector"></select>
     </div>
@@ -16,8 +18,11 @@
     <input id="chat-message-submit" type="button" value="Send" />
     {{ room_name.name|json_script:"room-name" }}
     <script>
+      let chatMessageInput = document.querySelector("#chatMessageInput");
+      let chatMessageSend = document.querySelector("#chatMessageSend");
       let onlineUsersSelector = document.querySelector("#onlineUsersSelector");
       let chatLog = document.querySelector("#chat-log");
+
       function onlineUsersSelectorAdd(value) {
         if (document.querySelector("option[value='" + value + "']")) return;
         let newOption = document.createElement("option");
@@ -26,7 +31,7 @@
         onlineUsersSelector.appendChild(newOption);
       }
       function onlineUsersSelectorRemove(value) {
-        let oldOption = document.querySelector("option[value'" + value + "']");
+        let oldOption = document.querySelector("option[value='" + value + "']");
         if (oldOption !== null) oldOption.remove();
       }
       const roomName = JSON.parse(
@@ -61,6 +66,13 @@
             chatLog.value += data.user + " left the room. \n";
             onlineUsersSelectorRemove(data.user);
             break;
+          case "private_message":
+            chatLog.value += data.user + ": \n" + data.message + "\n";
+            break;
+
+          case "private_message_delivered":
+            chatLog.value += data.target + ":\n " + data.message + "\n";
+            break;
         }
       };
 
@@ -76,14 +88,17 @@
           document.querySelector("#chat-message-submit").click();
         }
       };
-
+      onlineUsersSelector.onchange = function () {
+        chatMessageInput.value = "/pm " + onlineUsersSelector.value + " ";
+        onlineUsersSelector.value = null;
+        chatMessageInput.focus();
+      };
       document.querySelector("#chat-message-submit").onclick = function (e) {
         const messageInputDom = document.querySelector("#chat-message-input");
-        const message = messageInputDom.value;
+        const message = "/pm kola " + messageInputDom.value;
         chatSocket.send(
           JSON.stringify({
             message: message,
-            yell: "yell  ",
           })
         );
 
